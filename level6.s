@@ -45,13 +45,13 @@ _start:
     mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
     sub rsp, 0x400 # setting up the stack as the buffer variable
     mov rsi, rsp
-    mov rdx, 0x400 # providing an appropriate size
+    mov rdx, 0x400 # upto how many bytes can be read
     xor rax, rax # 0x0 or 0 is the syscall value for read()
     syscall # read(conn, *buf, 1024)
 
-    # Response string: "HTTP/1.0 200 OK\r\n\r\n"
+    # Response string: "HTTP/1.0 200 OK\r\n\r\n" followed by NULL terminator "\0"
     # 0x48 0x54 0x54 0x50 | 0x2f 0x31 0x2e 0x30 0x20 0x32 0x30 0x30 | 0x20 0x4f 0x4b 0x0d 0x0a 0x0d 0x0a 0x00
-    # rdi already has required file descriptor, so we won't be changing that
+    mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
     mov rax, 0x000a0d0a0d4b4f20
     push rax
     mov rax, 0x30303220302e312f
@@ -59,14 +59,14 @@ _start:
     mov eax, 0x50545448
     mov [rsp-4], eax
     sub rsp, 4
-    lea rsi, [rsp]
-    mov rdx, 0x13
-    mov rax, 0x1 # write()
-    syscall
+    lea rsi, [rsp] # pushed the response string on to the stack and set the address of the stack for the response parameter
+    mov rdx, 0x13 # the response string is 19 (0x13) bytes
+    mov rax, 0x1 # 0x1 or 1 is the syscall value for write()
+    syscall # write(conn, "HTTP/1.0 200 OK\r\n\r\n", 19)
 
-    # rdi already has required file descriptor, so we won't be changing that
-    mov rax, 0x3 # close()
-    syscall # close(sockfd)
+    mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
+    mov rax, 0x3 # 0x3 or 3 is the syscall value for close()
+    syscall # close(conn)
 
     xor rdi, rdi # 0
     mov rax, 0x3c # 0x3c or 60 is the syscall value for exit()
