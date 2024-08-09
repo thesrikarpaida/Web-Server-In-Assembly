@@ -49,6 +49,22 @@ _start:
     xor rax, rax # 0x0 or 0 is the syscall value for read()
     syscall # read(conn, *buf, 1024)
 
+    lea rdi, [rsi+4] # rsi has the address of the stack, where the response started.
+    # rsi+4 is where we skip "GET " in the response, where the file name starts.
+    # the file name should end with a NULL terminator, so we loop through till we find a space " ", and add a NULL at that location in rdi
+    xor rax, rax # using rax as a counter
+    # mov rdx, 0x400
+.file_name_loop:
+    cmpb [rdi+rax], 0x20 # 0x20 is the hex value for " " (space)
+    je .end_file_name_loop
+    loop .loop
+.end_file_name_loop:
+    movb [rdi+rax], 0x0 # we add the NULL terminator where we find a space
+    xor rsi, rsi # 0
+    xor rdx, rdx # 0
+    mov rax, 0x2 # 0x2 or 2 is the syscall value for open()
+    syscall # open(file_name, O_RDONLY)
+
     # Response string: "HTTP/1.0 200 OK\r\n\r\n" followed by NULL terminator "\0"
     # 0x48 0x54 0x54 0x50 | 0x2f 0x31 0x2e 0x30 0x20 0x32 0x30 0x30 | 0x20 0x4f 0x4b 0x0d 0x0a 0x0d 0x0a 0x00
     mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
