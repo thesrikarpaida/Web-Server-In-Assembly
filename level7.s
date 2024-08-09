@@ -46,7 +46,7 @@ _start:
     sub rsp, 0x400 # setting up the stack as the buffer variable
     mov rsi, rsp
     mov rdx, 0x400 # upto how many bytes can be read
-    xor rax, rax # 0x0 or 0 is the syscall value for read()
+    xor rax, rax # 0 is the syscall value for read()
     syscall # read(conn, *buf, 1024)
 
     lea rdi, [rsi+4] # rsi has the address of the stack, where the response started.
@@ -69,8 +69,9 @@ _start:
     sub rsp, 0x1000 # clearing 4096 bytes on the stack buffer, which is how much we allow to read from the file.
     mov rsi, rsp # we read on to the stack
     mov rdx, 0x1000 # we give a buffer to read up to 4096 bytes
-    xor rax, rax # 0 is the syscall value for read()
+    xor rax, rax # syscall value for read()
     syscall # read(file_fd, *stack, 4096)
+    mov r13, rax # we will save the number of bytes read to the r13 register
 
     # rdi already has the file descriptor, since we're closing it immediately after reading from the file.
     mov rax, 0x3 # 0x3 or 3 is the syscall value for close()
@@ -78,7 +79,7 @@ _start:
 
     # Response string: "HTTP/1.0 200 OK\r\n\r\n" followed by NULL terminator "\0"
     # 0x48 0x54 0x54 0x50 | 0x2f 0x31 0x2e 0x30 0x20 0x32 0x30 0x30 | 0x20 0x4f 0x4b 0x0d 0x0a 0x0d 0x0a 0x00
-    mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
+    mov rdi, r14 # we write to the accepted connection, so we use that file descriptor
     mov rax, 0x000a0d0a0d4b4f20
     push rax
     mov rax, 0x30303220302e312f
@@ -91,8 +92,15 @@ _start:
     mov rax, 0x1 # 0x1 or 1 is the syscall value for write()
     syscall # write(conn, "HTTP/1.0 200 OK\r\n\r\n", 19)
 
-    mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
-    mov rax, 0x3 # 0x3 or 3 is the syscall value for close()
+    mov rdi, r14 # we write to the accepted connection, so we use that file descriptor
+    lea rsi, [rsp+0x14] # the size of response written is 0x13 bytes, and the extra 1 byte is the ending NULL byte we added into the response
+    # the response was on the stack after the file contents were added on to it. We just got the address from where the file contents started, so we skip writing the response part
+    mov rdx, r13 # number of bytes read from the file
+    mov rax, 0x1 # syscall value for write()
+    syscall # write(conn, file_content, file_content_size)
+
+    mov rdi, r14 # we close the connection
+    mov rax, 0x3 # syscall value for close()
     syscall # close(conn)
 
     xor rdi, rdi # 0
