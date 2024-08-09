@@ -66,10 +66,15 @@ _start:
     syscall # open(file_name, O_RDONLY)
 
     mov rdi, rax # we read from the file descriptor that is opened
+    sub rsp, 0x1000 # clearing 4096 bytes on the stack buffer, which is how much we allow to read from the file.
     mov rsi, rsp # we read on to the stack
     mov rdx, 0x1000 # we give a buffer to read up to 4096 bytes
     xor rax, rax # 0 is the syscall value for read()
     syscall # read(file_fd, *stack, 4096)
+
+    # rdi already has the file descriptor, since we're closing it immediately after reading from the file.
+    mov rax, 0x3 # 0x3 or 3 is the syscall value for close()
+    syscall # close(file_fd)
 
     # Response string: "HTTP/1.0 200 OK\r\n\r\n" followed by NULL terminator "\0"
     # 0x48 0x54 0x54 0x50 | 0x2f 0x31 0x2e 0x30 0x20 0x32 0x30 0x30 | 0x20 0x4f 0x4b 0x0d 0x0a 0x0d 0x0a 0x00
