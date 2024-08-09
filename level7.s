@@ -61,9 +61,15 @@ _start:
 .end_file_name_loop:
     movb [rdi+rax], 0x0 # we add the NULL terminator where we find a space
     xor rsi, rsi # 0
-    xor rdx, rdx # 0
+    # xor rdx, rdx # 0
     mov rax, 0x2 # 0x2 or 2 is the syscall value for open()
     syscall # open(file_name, O_RDONLY)
+
+    mov rdi, rax # we read from the file descriptor that is opened
+    mov rsi, rsp # we read on to the stack
+    mov rdx, 0x1000 # we give a buffer to read up to 4096 bytes
+    xor rax, rax # 0 is the syscall value for read()
+    syscall # read(file_fd, *stack, 4096)
 
     # Response string: "HTTP/1.0 200 OK\r\n\r\n" followed by NULL terminator "\0"
     # 0x48 0x54 0x54 0x50 | 0x2f 0x31 0x2e 0x30 0x20 0x32 0x30 0x30 | 0x20 0x4f 0x4b 0x0d 0x0a 0x0d 0x0a 0x00
