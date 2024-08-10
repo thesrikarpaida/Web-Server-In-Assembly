@@ -35,6 +35,7 @@ _start:
     mov rax, 0x32 # 0x32 or 50 is the syscall value for listen()
     syscall # listen(sockfd, 0)
 
+.request_loop:
     mov rdi, r15 # socket file descriptor
     xor rsi, rsi # NULL
     xor rdx, rdx # NULL
@@ -57,7 +58,8 @@ _start:
 .file_name_loop:
     cmpb [rdi+rax], 0x20 # 0x20 is the hex value for " " (space)
     je .end_file_name_loop
-    loop .loop
+    inc rax
+    loop .file_name_loop
 .end_file_name_loop:
     movb [rdi+rax], 0x0 # we add the NULL terminator where we find a space
     xor rsi, rsi # 0
@@ -102,6 +104,9 @@ _start:
     mov rdi, r14 # we close the connection
     mov rax, 0x3 # syscall value for close()
     syscall # close(conn)
+
+    # We're responding to multiple requests, so we jump back to accepting new connections
+    jmp .request_loop
 
     xor rdi, rdi # 0
     mov rax, 0x3c # 0x3c or 60 is the syscall value for exit()
