@@ -57,7 +57,8 @@ _start:
 .file_name_loop:
     cmpb [rdi+rax], 0x20 # 0x20 is the hex value for " " (space)
     je .end_file_name_loop
-    loop .loop
+    inc rax
+    loop .file_name_loop
 .end_file_name_loop:
     movb [rdi+rax], 0x0 # we add the NULL terminator where we find a space
     xor rsi, rsi # 0
