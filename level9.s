@@ -43,6 +43,23 @@ _start:
     syscall # accept(sockfd, NULL, NULL)
     mov r14, rax # file descriptor for accepted connection is stored in a register for later use
 
+    # We will fork the process since we need multiple handlers that deal with multiple requests
+    mov rax, 0x39 # 0x39 or 57 is the syscall value for fork()
+    syscall # fork()
+    # the result of running fork() leads to 2 outputs: 0 for child process and >0 for parent process
+    cmp rax, 0x0
+    je .child_process
+
+    mov rdi, r14 # we close the connection in the parent process for every program run
+    mov rax, 0x3 # syscall value for close()
+    syscall # close(conn)
+    jmp .request_loop # jump to the request loop to accept a new connection
+
+.child_process:
+    mov rdi, r15 # socket descriptor
+    mov rax, 0x3 # syscall value for close()
+    syscall # close(sockfd)
+    
     mov rdi, r14 # we read from the accepted connection, so we use that file descriptor
     sub rsp, 0x400 # setting up the stack as the buffer variable
     mov rsi, rsp
@@ -100,13 +117,6 @@ _start:
     mov rdx, r13 # number of bytes read from the file
     mov rax, 0x1 # syscall value for write()
     syscall # write(conn, file_content, file_content_size)
-
-    mov rdi, r14 # we close the connection
-    mov rax, 0x3 # syscall value for close()
-    syscall # close(conn)
-
-    # We're responding to multiple requests, so we jump back to accepting new connections
-    jmp .request_loop
 
     xor rdi, rdi # 0
     mov rax, 0x3c # 0x3c or 60 is the syscall value for exit()
