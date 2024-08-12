@@ -6,6 +6,6 @@
 _start:
     mov rdi, 0x0
     mov rax, 0x3c # 0x3c or 60 is the syscall value for exit()
-    syscall
+    syscall # exit(0)
 
 .section .data
