@@ -2,11 +2,13 @@
 
 *** NEEDS REFINING, NOT FINISHED YET *** 
 
-This repository is based on a module in the dojo [Intro to Cybersecurity](https://pwn.college/intro-to-cybersecurity/) in [pwn.college](pwn.college). I'm trying to build a web server completely written in Assembly shellcode.<br>
-This project is still a work in progress. The final code in x64 Assembly will be a multi-processed program that can communicate and respond with multiple HTTP GET and POST requests accordingly.
-I'm writing the code in levels just like in the module so as to get through it easily.
+I'm trying to build a web server completely written in Assembly shellcode.<br>
+This project is not entirely done. The final code in x64 Assembly is supposed to be a multi-processed program that can communicate and respond with multiple HTTP GET and POST requests accordingly. Well that was the goal though.
+I'm writing the code in levels just like in the modules of [pwn.college](pwn.college) so as to get a step by step process that makes it easier to achieve and actually make it feasible.
 
 It consists of 11 levels. All the levels together finally build up to creating a web server in shellcode.
+
+Currently, I finished the code to deal with multiple HTTP GET requests. The POST requests part is still pending, which I plan on doing later.
 
 ## Level 1
 The shellcode exits a program.
